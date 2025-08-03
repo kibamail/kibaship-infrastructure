@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: ingress-gateway
+  namespace: ingress-gateway
+  annotations:
+    io.cilium.gateway/node-selector: "ingress-ready=true"
+spec:
+  gatewayClassName: ingress
+  listeners:
+    - name: http
+      port: 30080
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      port: 30443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All

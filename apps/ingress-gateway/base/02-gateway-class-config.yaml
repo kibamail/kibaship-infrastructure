@@ -1,0 +1,8 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumGatewayClassConfig
+metadata:
+  name: ingress-gateway-config
+  namespace: ingress-gateway
+spec:
+  service:
+    type: NodePort
