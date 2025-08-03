@@ -6,7 +6,7 @@ metadata:
   annotations:
     io.cilium.gateway/node-selector: "ingress-ready=true"
 spec:
-  gatewayClassName: ingress
+  gatewayClassName: cilium
   listeners:
     - name: http
       port: 30080

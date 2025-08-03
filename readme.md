@@ -227,8 +227,22 @@ cilium install \
   --set kubeProxyReplacement=true \
   --set tunnelProtocol=vxlan \
   --set gatewayAPI.enabled=true \
+  --set gatewayAPI.hostNetwork.enabled=true \
+  --set gatewayAPI.hostNetwork.nodeLabelSelector="ingress-ready=true" \
   --set ipam.mode=cluster-pool \
   --set loadBalancer.mode=snat \
   --set operator.replicas=2 \
   --set bpf.masquerade=true
 ```
+
+These three configurations are the most important:
+
+```bash
+--set gatewayAPI.enabled=true \
+--set gatewayAPI.hostNetwork.enabled=true \
+--set gatewayAPI.hostNetwork.nodeLabelSelector="ingress-ready=true" \
+```
+
+This enables gateway api support, and will run all gateways on the specified ports on the nodes that match the label selector. On staging, all nodes have this selector.
+
+Now our external load balancer will just point to port 30080 and 30443 on each node to handle ingress traffic.
