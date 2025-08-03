@@ -246,3 +246,48 @@ These three configurations are the most important:
 This enables gateway api support, and will run all gateways on the specified ports on the nodes that match the label selector. On staging, all nodes have this selector.
 
 Now our external load balancer will just point to port 30080 and 30443 on each node to handle ingress traffic.
+
+
+## Setup cert manager
+
+First, generate a Cloudflare api token with the following settings:
+
+```bash
+DNS EDIT/READ for kibaship.app
+```
+
+Now add the api token as a secret in kubernetes
+
+```bash
+kubectl create secret generic cloudflare-api-token \
+  --from-literal=api-token=xxxx-xxx \
+  --namespace cert-manager
+```
+
+The following commands should be run from a control plane of the cluster:
+
+Install helm:
+
+```bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+```
+
+Next, install cert manager:
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+
+helm repo update
+
+helm install \
+  cert-manager oci://quay.io/jetstack/charts/cert-manager \
+  --version v1.18.2 \
+  --namespace cert-manager \
+  --create-namespace \
+  --set replicaCount=3 \
+  --set crds.enabled=true \
+  --set prometheus.enabled=false \
+  --set webhook.replicaCount=2
+```

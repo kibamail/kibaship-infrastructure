@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: certmanager-cloudflare-acme-issuer
+spec:
+  acme:
+    email: engineering@kibamail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: acme-certificates-kibaship-com
+    solvers:
+      - dns01:
+          cloudflare:
+            email: engineering@kibamail.com
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token

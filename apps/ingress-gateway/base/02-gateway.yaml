@@ -17,6 +17,11 @@ spec:
     - name: https
       port: 30443
       protocol: HTTPS
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: tenant-wildcard-certificate
+            namespace: certificates
       allowedRoutes:
         namespaces:
           from: All

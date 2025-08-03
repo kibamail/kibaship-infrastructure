@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/dnsNames/0
+  value: "*.staging.kibaship.app"
