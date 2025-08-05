@@ -228,7 +228,9 @@ cilium install \
   --set tunnelProtocol=vxlan \
   --set gatewayAPI.enabled=true \
   --set gatewayAPI.hostNetwork.enabled=true \
+  --set gatewayAPI.enableAlpn=true \
   --set gatewayAPI.hostNetwork.nodeLabelSelector="ingress-ready=true" \
+  --set gatewayAPI.enableProxyProtocol=true \
   --set ipam.mode=cluster-pool \
   --set loadBalancer.mode=snat \
   --set operator.replicas=2 \
@@ -290,4 +292,11 @@ helm install \
   --set crds.enabled=true \
   --set prometheus.enabled=false \
   --set webhook.replicaCount=2
+```
+
+## Install haproxy ingress controller
+
+```bash
+
+helm repo add haproxytech https://haproxytech.github.io/helm-charts
 ```

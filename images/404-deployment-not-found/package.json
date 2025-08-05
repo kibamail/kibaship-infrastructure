@@ -1,0 +1,18 @@
+{
+  "name": "404-deployment-not-found",
+  "version": "1.0.0",
+  "description": "404 Deployment Not Found service for Kibaship PaaS",
+  "main": "src/main.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.mjs",
+    "dev": "node --watch src/main.mjs"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.18.1",
+    "hono": "^4.8.12"
+  }
+}

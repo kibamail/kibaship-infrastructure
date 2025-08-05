@@ -6,3 +6,4 @@ namespace: certificates
 resources:
   - 01-namespace.yaml
   - 02-tenant-wildcard-certificate.yaml
+  - 03-reference-grant.yaml
