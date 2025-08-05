@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Build script for 404-deployment-not-found
-IMAGE_NAME="ghcr.io/kibamail/404-deployment-not-found"
+IMAGE_NAME="ghcr.io/kibamail/kibaship-404-deployment-not-found"
 TAG=${1:-latest}
 
 echo "Building image: ${IMAGE_NAME}:${TAG}"
 
-docker build -t "${IMAGE_NAME}:${TAG}" .
+docker buildx build --platform linux/amd64 -t "${IMAGE_NAME}:${TAG}" .
 
 if [ $? -eq 0 ]; then
     echo "Image built successfully!"

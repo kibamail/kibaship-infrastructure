@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ingress-gateway
+
+resources:
+  - 01-deployment.yaml
+  - 02-service.yaml
+  - 03-http-route.yaml

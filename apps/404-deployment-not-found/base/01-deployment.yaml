@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-not-found
+  namespace: ingress-gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: deployment-not-found
+  template:
+    metadata:
+      labels:
+        app: deployment-not-found
+    spec:
+      containers:
+        - name: deployment-not-found
+          image: ghcr.io/kibamail/kibaship-404-deployment-not-found
+          ports:
+            - containerPort: 3000
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi

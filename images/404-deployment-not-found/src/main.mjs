@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { logger } from "hono/logger";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -136,7 +137,32 @@ class NotFoundService {
   initialize() {
     const templatePath = join(__dirname, "..", "public", "index.html");
     this.templateLoader.loadTemplate("404", templatePath);
+    this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  /**
+   * Sets up middleware for detailed request logging
+   */
+  setupMiddleware() {
+    // Custom detailed logger that dumps all headers
+    this.app.use("*", async (c, next) => {
+      const start = Date.now();
+      const requestId = RequestIdExtractor.extract(c.req.header());
+
+      console.log(`🔍 REQUEST [${requestId}] ${c.req.method} ${c.req.url}`);
+      console.log("HEADERS:", JSON.stringify(c.req.header(), null, 2));
+
+      await next();
+
+      const duration = Date.now() - start;
+      console.log(
+        `✅ COMPLETED [${requestId}] ${c.res.status} ${duration}ms\n`,
+      );
+    });
+
+    // Use Hono's built-in logger
+    this.app.use(logger());
   }
 
   setupRoutes() {

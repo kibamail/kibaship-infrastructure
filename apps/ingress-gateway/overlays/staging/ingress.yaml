@@ -9,3 +9,9 @@ spec:
       sectionName: http
   hostnames:
     - "*.staging.kibaship.app"
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301

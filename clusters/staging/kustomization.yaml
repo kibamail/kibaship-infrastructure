@@ -5,3 +5,4 @@ resources:
   - ../../apps/cert-manager/overlays/staging
   - ../../apps/certificates/overlays/staging
   - ../../apps/ingress-gateway/overlays/staging
+  - ../../apps/404-deployment-not-found/overlays/staging

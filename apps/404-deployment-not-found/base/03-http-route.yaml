@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: deployment-not-found
+  namespace: ingress-gateway
+spec:
+  parentRefs:
+    - name: ingress-gateway
+      namespace: ingress-gateway
+  hostnames:
+    - "*.staging.kibaship.app"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: deployment-not-found
+          namespace: ingress-gateway
+          port: 80
