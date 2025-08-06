@@ -18,6 +18,12 @@ Once you connect to the server using `ssh root@<ip>`, you will be connected to t
 installimage
 ```
 
+When installing the operating system, 100% make sure you are installing it on drive /dev/nvme1n1 and not /dev/nvme0n1.
+
+`/dev/nvme0n1` must be kept free to use as dedicated replicated storage disk. If you make a mistake, LINSTOR WILL FORMAT AND WIPE THE OPERATING SYSTEM WHILE SETTING UP!
+
+Also make sure to disable creation of swap partitions as we WILL NEVER BE USING SWAP PARTITIONS with kubernetes. We'll disable this anyways, so just don't create it.
+
 This is a program created by Hetzner Online GmbH. It is used to install the operating system on the server.
 This command brings up an interactive editor we can use to configure the installation.
 In this, we need to configure the following:
@@ -299,4 +305,13 @@ helm install \
 ```bash
 
 helm repo add haproxytech https://haproxytech.github.io/helm-charts
+```
+
+# Setup replicated storage
+
+
+```bash
+sudo apt install linux-headers-$(uname -r)
+
+kubectl apply --server-side -f https://github.com/piraeusdatastore/piraeus-operator/releases/download/v2.9.0/manifest.yaml
 ```

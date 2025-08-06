@@ -1,0 +1,15 @@
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: database-storage-pool
+  namespace: piraeus-datastore
+  # This will apply on all satellites (worker nodes) in the cluster
+spec:
+  storagePools:
+    - name: database-storage-pool
+      lvmThinPool:
+        volumeGroup: database-storage-pool-lvm
+        thinPool: database-storage-pool-lvm-thin-pool
+      source:
+        hostDevices:
+          - /dev/nvme0n1
