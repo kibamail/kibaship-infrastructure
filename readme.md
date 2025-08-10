@@ -315,3 +315,29 @@ sudo apt install linux-headers-$(uname -r)
 
 kubectl apply --server-side -f https://github.com/piraeusdatastore/piraeus-operator/releases/download/v2.9.0/manifest.yaml
 ```
+
+# Tekton setup
+
+First we need to install tekton:
+
+```bash
+kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v1.3.1/release.yaml
+```
+
+
+# Victoria logs setup
+
+```bash
+helm repo add vm https://victoriametrics.github.io/helm-charts/
+helm repo update
+helm search repo vm/victoria-logs-cluster -l
+helm show values vm/victoria-logs-cluster > apps/logs/values/victoria-logs-cluster.values.yaml
+
+helm install vlc vm/victoria-logs-cluster -f apps/logs/values/victoria-logs-cluster.values.yaml -n logs
+```
+
+to update config after installation, run:
+
+```bash
+helm upgrade vlc vm/victoria-logs-cluster -f apps/logs/values/victoria-logs-cluster.values.yaml -n logs
+```

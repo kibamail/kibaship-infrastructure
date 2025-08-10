@@ -7,3 +7,4 @@ resources:
   - ../../apps/ingress-gateway/overlays/staging
   - ../../apps/404-deployment-not-found/overlays/staging
   - ../../apps/linstor/overlays/staging
+  - ../../apps/logs/overlays/staging
