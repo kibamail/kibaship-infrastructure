@@ -1,0 +1,421 @@
+# =============================================================================
+# Tekton Test Pipeline for Log Generation
+# =============================================================================
+# This file contains a complete Tekton pipeline setup for testing purposes.
+# It includes 3 tasks that generate logs, a pipeline to orchestrate them,
+# a pipeline run to execute the pipeline, and the required namespace.
+#
+# To apply this file:
+#   kubectl apply -f tekton-test-pipeline.yaml
+#
+# To check the pipeline run status:
+#   kubectl get pipelinerun -n customer-tekton-pipelines-test
+#
+# To view logs:
+#   kubectl logs -n customer-tekton-pipelines-test -l tekton.dev/pipelineRun=test-pipeline-run
+# =============================================================================
+
+---
+# =============================================================================
+# NAMESPACE
+# =============================================================================
+# Creates the namespace where all Tekton resources will be deployed
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: customer-tekton-pipelines-test
+  labels:
+    purpose: tekton-testing
+    team: platform
+
+---
+# =============================================================================
+# TASK 1: LOG GENERATOR
+# =============================================================================
+# This task generates various types of logs with different levels and formats
+# to simulate a typical application logging pattern
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: log-generator-task
+  namespace: customer-tekton-pipelines-test
+  labels:
+    app: tekton-test
+    component: log-generator
+spec:
+  description: |
+    Generates various types of logs including INFO, WARN, ERROR, and DEBUG levels
+    to simulate realistic application logging for testing log aggregation systems.
+  params:
+    - name: log-count
+      description: Number of log entries to generate
+      default: "50"
+      type: string
+    - name: application-name
+      description: Name of the simulated application
+      default: "test-app"
+      type: string
+  steps:
+    - name: generate-startup-logs
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        echo "$(date -Iseconds) INFO [$(params.application-name)] Starting application initialization..."
+        echo "$(date -Iseconds) INFO [$(params.application-name)] Loading configuration files..."
+        echo "$(date -Iseconds) INFO [$(params.application-name)] Connecting to database..."
+        sleep 2
+        echo "$(date -Iseconds) INFO [$(params.application-name)] Database connection established successfully"
+        echo "$(date -Iseconds) INFO [$(params.application-name)] Application startup completed"
+
+    - name: generate-runtime-logs
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        LOG_COUNT=$(params.log-count)
+        APP_NAME=$(params.application-name)
+
+        echo "$(date -Iseconds) INFO [$APP_NAME] Beginning runtime log generation..."
+
+        for i in $(seq 1 $LOG_COUNT); do
+          LEVEL=$((i % 4))
+          case $LEVEL in
+            0) echo "$(date -Iseconds) INFO [$APP_NAME] Processing request #$i - user_id=user_$((i % 10)) action=view_page";;
+            1) echo "$(date -Iseconds) DEBUG [$APP_NAME] Cache hit for key=user_profile_$((i % 5)) response_time=25ms";;
+            2) echo "$(date -Iseconds) WARN [$APP_NAME] Slow query detected: duration=350ms query=SELECT * FROM users WHERE id=$((i % 100))";;
+            3) echo "$(date -Iseconds) ERROR [$APP_NAME] Failed to process payment: transaction_id=txn_$i error=insufficient_funds";;
+          esac
+
+          # Add some realistic delays
+          if [ $((i % 10)) -eq 0 ]; then
+            sleep 1
+          fi
+        done
+
+        echo "$(date -Iseconds) INFO [$APP_NAME] Runtime log generation completed successfully"
+
+---
+# =============================================================================
+# TASK 2: DATA PROCESSOR
+# =============================================================================
+# This task simulates data processing operations while generating structured logs
+# including metrics, performance data, and processing status updates
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: data-processor-task
+  namespace: customer-tekton-pipelines-test
+  labels:
+    app: tekton-test
+    component: data-processor
+spec:
+  description: |
+    Simulates data processing operations including batch processing, data validation,
+    and transformation while generating comprehensive logs for monitoring.
+  params:
+    - name: batch-size
+      description: Number of records to process in each batch
+      default: "100"
+      type: string
+    - name: processor-id
+      description: Unique identifier for this processor instance
+      default: "proc-001"
+      type: string
+  steps:
+    - name: initialize-processor
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        PROC_ID=$(params.processor-id)
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Initializing data processor..."
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Processor configuration loaded"
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Memory allocated: 512MB"
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Thread pool initialized: 4 workers"
+
+    - name: process-data-batches
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        BATCH_SIZE=$(params.batch-size)
+        PROC_ID=$(params.processor-id)
+
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Starting batch processing..."
+
+        # Simulate processing 5 batches
+        for batch in $(seq 1 5); do
+          echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Processing batch $batch of 5"
+          echo "$(date -Iseconds) DEBUG [data-processor:$PROC_ID] Reading $BATCH_SIZE records from source"
+
+          # Simulate processing time
+          sleep 2
+
+          # Simulate some validation warnings
+          if [ $((batch % 2)) -eq 0 ]; then
+            echo "$(date -Iseconds) WARN [data-processor:$PROC_ID] Found $((batch * 2)) records with missing optional fields in batch $batch"
+          fi
+
+          # Simulate metrics
+          PROCESSED=$((BATCH_SIZE - (batch % 3)))
+          FAILED=$((batch % 3))
+          echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Batch $batch completed: processed=$PROCESSED, failed=$FAILED, duration=$((2000 + batch * 100))ms"
+
+          # Simulate occasional errors
+          if [ $batch -eq 3 ]; then
+            echo "$(date -Iseconds) ERROR [data-processor:$PROC_ID] Temporary connection timeout in batch $batch, retrying..."
+            sleep 1
+            echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Retry successful for batch $batch"
+          fi
+        done
+
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] All batches processed successfully"
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Total records processed: $((5 * BATCH_SIZE))"
+        echo "$(date -Iseconds) INFO [data-processor:$PROC_ID] Processing completed in $((5 * 2))s"
+
+---
+# =============================================================================
+# TASK 3: CLEANUP AND MONITORING
+# =============================================================================
+# This task performs cleanup operations and generates monitoring/health check logs
+# including system metrics and resource cleanup activities
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup-monitoring-task
+  namespace: customer-tekton-pipelines-test
+  labels:
+    app: tekton-test
+    component: cleanup-monitoring
+spec:
+  description: |
+    Performs cleanup operations and system monitoring while generating logs
+    for health checks, resource usage, and maintenance activities.
+  params:
+    - name: cleanup-age
+      description: Age threshold for cleanup operations (in minutes)
+      default: "60"
+      type: string
+    - name: monitoring-interval
+      description: Monitoring check interval in seconds
+      default: "5"
+      type: string
+  steps:
+    - name: system-health-check
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        echo "$(date -Iseconds) INFO [monitoring] Starting system health check..."
+        echo "$(date -Iseconds) INFO [monitoring] Checking CPU usage..."
+        echo "$(date -Iseconds) INFO [monitoring] CPU usage: 23% (normal)"
+        echo "$(date -Iseconds) INFO [monitoring] Checking memory usage..."
+        echo "$(date -Iseconds) INFO [monitoring] Memory usage: 67% (acceptable)"
+        echo "$(date -Iseconds) INFO [monitoring] Checking disk space..."
+        echo "$(date -Iseconds) INFO [monitoring] Disk usage: /var/log 45% (normal)"
+        echo "$(date -Iseconds) INFO [monitoring] Health check completed - all systems operational"
+
+    - name: cleanup-operations
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        CLEANUP_AGE=$(params.cleanup-age)
+        echo "$(date -Iseconds) INFO [cleanup] Starting cleanup operations..."
+        echo "$(date -Iseconds) INFO [cleanup] Scanning for files older than $CLEANUP_AGE minutes..."
+
+        # Simulate finding and cleaning up files
+        for i in $(seq 1 8); do
+          FILE_AGE=$((60 + i * 15))
+          if [ $FILE_AGE -gt $CLEANUP_AGE ]; then
+            echo "$(date -Iseconds) INFO [cleanup] Removing old temp file: /tmp/data_$i.tmp (age: ${FILE_AGE}m)"
+          else
+            echo "$(date -Iseconds) DEBUG [cleanup] Keeping file: /tmp/data_$i.tmp (age: ${FILE_AGE}m)"
+          fi
+        done
+
+        echo "$(date -Iseconds) INFO [cleanup] Cleanup completed: 5 files removed, 3 files retained"
+
+    - name: generate-metrics
+      image: alpine:3.18
+      script: |
+        #!/bin/sh
+        INTERVAL=$(params.monitoring-interval)
+        echo "$(date -Iseconds) INFO [metrics] Generating system metrics..."
+
+        # Generate some sample metrics over time
+        for i in $(seq 1 6); do
+          CPU_USAGE=$((20 + i * 3))
+          MEMORY_USAGE=$((60 + i * 2))
+          NETWORK_IO=$((100 + i * 50))
+          DISK_IO=$((50 + i * 25))
+
+          echo "$(date -Iseconds) INFO [metrics] cpu_usage_percent=$CPU_USAGE memory_usage_percent=$MEMORY_USAGE network_io_kbps=$NETWORK_IO disk_io_kbps=$DISK_IO"
+
+          if [ $CPU_USAGE -gt 35 ]; then
+            echo "$(date -Iseconds) WARN [metrics] High CPU usage detected: $CPU_USAGE%"
+          fi
+
+          sleep $INTERVAL
+        done
+
+        echo "$(date -Iseconds) INFO [metrics] Metrics collection completed"
+
+---
+# =============================================================================
+# PIPELINE DEFINITION
+# =============================================================================
+# This pipeline orchestrates the three tasks above in sequence to create
+# a comprehensive log generation workflow for testing purposes
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: log-generation-test-pipeline
+  namespace: customer-tekton-pipelines-test
+  labels:
+    app: tekton-test
+    purpose: log-generation
+spec:
+  description: |
+    A test pipeline that executes three tasks in sequence to generate various types
+    of logs for testing log aggregation, monitoring, and observability systems.
+  params:
+    - name: log-count
+      description: Total number of logs to generate in the log-generator task
+      default: "75"
+      type: string
+    - name: application-name
+      description: Name of the application for log identification
+      default: "tekton-test-app"
+      type: string
+    - name: batch-size
+      description: Batch size for data processing simulation
+      default: "150"
+      type: string
+    - name: processor-id
+      description: Unique identifier for the data processor
+      default: "tekton-proc-001"
+      type: string
+  tasks:
+    # Task 1: Generate application logs
+    - name: generate-logs
+      taskRef:
+        name: log-generator-task
+      params:
+        - name: log-count
+          value: $(params.log-count)
+        - name: application-name
+          value: $(params.application-name)
+
+    # Task 2: Simulate data processing (runs after log generation)
+    - name: process-data
+      taskRef:
+        name: data-processor-task
+      params:
+        - name: batch-size
+          value: $(params.batch-size)
+        - name: processor-id
+          value: $(params.processor-id)
+      runAfter:
+        - generate-logs
+
+    # Task 3: Perform cleanup and monitoring (runs after data processing)
+    - name: cleanup-and-monitor
+      taskRef:
+        name: cleanup-monitoring-task
+      params:
+        - name: cleanup-age
+          value: "45"
+        - name: monitoring-interval
+          value: "3"
+      runAfter:
+        - process-data
+
+---
+# =============================================================================
+# PIPELINE RUN
+# =============================================================================
+# This PipelineRun executes the pipeline defined above with specific parameters
+# You can create additional PipelineRuns to test different scenarios
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: test-pipeline-run
+  namespace: customer-tekton-pipelines-test
+  labels:
+    app: tekton-test
+    run-type: manual-test
+spec:
+  pipelineRef:
+    name: log-generation-test-pipeline
+  params:
+    - name: log-count
+      value: "100"
+    - name: application-name
+      value: "customer-app-simulator"
+    - name: batch-size
+      value: "200"
+    - name: processor-id
+      value: "customer-processor-alpha"
+  # Automatically clean up the PipelineRun after 24 hours
+  timeouts:
+    pipeline: "1h"
+  # Keep the PipelineRun for debugging purposes
+  # You can add this section to automatically delete after a certain time:
+  # ttlSecondsAfterFinished: 86400  # 24 hours
+
+---
+# =============================================================================
+# ADDITIONAL PIPELINE RUN (OPTIONAL)
+# =============================================================================
+# Uncomment this section if you want to run a second pipeline for comparison
+# This creates a second pipeline run with different parameters for testing
+#
+# apiVersion: tekton.dev/v1beta1
+# kind: PipelineRun
+# metadata:
+#   name: test-pipeline-run-small
+#   namespace: customer-tekton-pipelines-test
+#   labels:
+#     app: tekton-test
+#     run-type: small-test
+# spec:
+#   pipelineRef:
+#     name: log-generation-test-pipeline
+#   params:
+#     - name: log-count
+#       value: "25"
+#     - name: application-name
+#       value: "small-test-app"
+#     - name: batch-size
+#       value: "50"
+#     - name: processor-id
+#       value: "small-processor-001"
+
+# =============================================================================
+# USAGE INSTRUCTIONS
+# =============================================================================
+#
+# 1. Apply this entire file to your cluster:
+#    kubectl apply -f tekton-test-pipeline.yaml
+#
+# 2. Check if the namespace was created:
+#    kubectl get namespace customer-tekton-pipelines-test
+#
+# 3. Verify that tasks were created:
+#    kubectl get tasks -n customer-tekton-pipelines-test
+#
+# 4. Check the pipeline:
+#    kubectl get pipeline -n customer-tekton-pipelines-test
+#
+# 5. Monitor the pipeline run:
+#    kubectl get pipelinerun -n customer-tekton-pipelines-test
+#    kubectl describe pipelinerun test-pipeline-run -n customer-tekton-pipelines-test
+#
+# 6. View logs from the pipeline run:
+#    kubectl logs -n customer-tekton-pipelines-test -l tekton.dev/pipelineRun=test-pipeline-run -f
+#
+# 7. View logs from a specific task:
+#    kubectl logs -n customer-tekton-pipelines-test -l tekton.dev/pipelineTask=generate-logs -f
+#
+# 8. Clean up when done:
+#    kubectl delete namespace customer-tekton-pipelines-test
+#
+# The pipeline will generate approximately 300+ log entries across all tasks,
+# providing a good dataset for testing your log aggregation and monitoring systems.
+# =============================================================================
