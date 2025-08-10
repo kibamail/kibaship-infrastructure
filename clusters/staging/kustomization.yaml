@@ -8,3 +8,4 @@ resources:
   - ../../apps/404-deployment-not-found/overlays/staging
   - ../../apps/linstor/overlays/staging
   - ../../apps/logs/overlays/staging
+  - ../../apps/registry/overlays/staging

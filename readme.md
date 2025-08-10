@@ -341,3 +341,26 @@ to update config after installation, run:
 ```bash
 helm upgrade vlc vm/victoria-logs-cluster -f apps/logs/values/victoria-logs-cluster.values.yaml -n logs
 ```
+
+# Registry setup
+
+First, generate a password for the registry:
+
+```bash
+docker run --entrypoint htpasswd httpd:2 -Bbn tekton password > ./htpasswd
+```
+
+Next, create a secret for the registry:
+
+```bash
+kubectl create secret generic registry-credentials --from-file=htpasswd=./htpasswd -n registry
+```
+
+Next, install the registry:
+
+```bash
+helm install docker-registry twuni/docker-registry \
+  --namespace registry \
+  --set persistence.existingClaim=deployments-registry-storage
+  --set replicaCount=2
+```
